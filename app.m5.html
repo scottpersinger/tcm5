@@ -1,0 +1,175 @@
+<!doctype html>
+<html>
+  <!-- Techcrunch M5 Reader  --> 
+  <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <meta name="apple-mobile-web-app-capable" content="yes">
+
+      <title>Techcrunch</title>
+        
+        <!--
+          @require jquery
+          @require jquery-mobile
+          @require m5.boot, m5.env, m5.support
+          @require m5.simplestorage
+          @require m5.remote_console
+          @require m5.simulator
+        -->
+
+        <link href="app.css?11" rel="stylesheet" /> 
+
+        <script type="text/javascript" charset="utf-8">
+        </script>
+
+        <script src="application.js" charset="utf-8"></script>
+        
+    </head>
+    <body>
+          <div id="home" data-role="page" data-theme="b">
+              <div data-role="header" data-position="fixed">
+            		<h1>TechCrunch</h1>
+            		<a class="button ui-btn-right" href="#settings" data-transition="slideup">Settings</a>
+            	</div>
+              <ul id="posts" data-role="listview">
+              </ul>
+          </div>
+          
+          <div id="fullstory" data-role="page" data-theme="b">
+            <div data-role="header" data-position="fixed">
+              <a class="button" href="#" data-rel="back">Back</a>
+              <h1 id="story-title"></h1>
+            </div>
+            <div class="s-scrollwrapper" style="display:block">
+              <ul class="rounded" style="padding:6px">
+                <span id="story-content" style="color:black;font-weight:normal;font-size:0.9em;margin-bottom:35px"></span>
+              </ul>
+            </div>
+          </div>
+          
+          <div id="settings"  data-role="page" data-theme="b">
+            <div data-role="header"><h1>Info</h1><a class="cancel ui-btn-right" data-rel="back">Close</a></div>
+            <ul data-role="listview" data-inset="true">
+              <li>Techcrunch M5 Reader - v0.5</li>
+              <li>
+                <button id="reset-button">Reset Cache</button>
+              </li>
+            </ul>
+          </div>
+            
+        
+      
+      <script>
+        var earliestDate = null;
+        var latestDate = null;
+        
+        var techcrunch = null;
+        
+        function show_message(msg) {
+          $('#message').html(msg);
+          $('#msgbox').show();
+        }
+        
+        function hide_message() {
+          $('#msgbox').hide();
+        }
+        
+        function reload() {
+          show_message('Loading stories...');
+          techcrunch.loadNewPosts(postBuilder, function() {
+            $('#posts').listview('refresh');
+            hide_message();
+          });
+        }
+        
+        // Onload
+        M5.onTouchReady(function(){
+          $('#posts li').live('vmousedown', function() {
+            var post = $(this).data('post');
+          
+            console.log("Tapped post: " + post);
+            
+            $('#story-title').html(post.title);
+            $("#story-content").html(post.body);
+            $('#loadButton').unbind('click');
+            
+            techcrunch.loadStory(post.url, function(body) {
+              body = body.replace(/<object.*?\/(object)?>/igm, '').replace(/<script.*?\/(script)?>/igm, '').replace(/<embed.*?\/(embed)?>/igm, '').replace(/<iframe.*?\/(iframe>)?/igm, '');
+              
+              //console.log(body);
+              $('#story-content').html('<p>' + body + '</p>');
+              $('#story-content img, #story-content script, #story-content noscript').remove();
+              //$("#story-content").prepend(imgTag);
+              //$('#story-content a').attr('target', "_blank");
+            });
+          });
+
+          $('#reset-button').bind('vclick', function() {
+            if (confirm("Are you sure you want to clear cached data?")) {
+              techcrunch.reset();
+              window.location = '/';
+            }
+          });
+            
+          
+          $('#myhost').html(window.location.href);
+          
+          //jQT.barsSettings.autoLoad_iScroll = false;
+          
+          // Story swipe
+          $('#story-content').swipe(function(evt, data) {
+            //jQT.goBack();
+          });
+          // Reload button
+          $('#reload').click(function() {
+            window.location.reload();
+          });
+          // Reset button
+          $('#reset').click(function() {
+            techcrunch.reset();
+            applicationCache.update();
+            window.location.reload();
+          });
+          // Dev mode
+          if (localStorage.getItem('devmode')) {
+            $('#devmode').attr('checked',true);
+          }
+          $('#devmode').change(function() {
+            if ($(this).val()) {
+              localStorage.setItem('devmode', 'true');
+              techcrunch.runLocally(false);
+            } else {
+              localStorage.removeItem('devmode');
+              techcrunch.runLocally(false);
+            }
+          });
+          // Message box
+          $('#msgbox').ajaxError(function() {
+            hide_message();
+          });
+
+          $('#story-content').bind('touchmove', function(e) {
+            console.log("Touch move! ");
+            console.log(e);
+          });
+          
+          $('#loadButton').click(reload);
+          
+          setTimeout(function() {
+            $storage = SimpleStorage.connect('blogs', 2*1024*1024, function(db) {
+              techcrunch = BlogReader(db);
+              setTimeout(reload, 100);
+            
+              techcrunch.loadStoredPosts(postBuilder, function() {
+                $('#posts').listview('refresh');
+                //jQT.setPageHeight();                
+                hide_message();
+              });
+            });
+          }, 1000);
+        
+        });
+        
+      </script>
+    </body>
+</html>
