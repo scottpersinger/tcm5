@@ -3,8 +3,8 @@
   <!-- Techcrunch M5 Reader  --> 
   <head>
       <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <meta name="apple-mobile-web-app-capable" content="yes">
+      <meta name="viewport" content="initial-scale=1.0,user-scalable=no" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
 
       <title>Techcrunch</title>
         
@@ -15,9 +15,10 @@
           @require m5.simplestorage
           @require m5.remote_console
           @require m5.simulator
+          @require scrollability
         -->
 
-        <link href="app.css?11" rel="stylesheet" /> 
+        <link href="app.css" rel="stylesheet" /> 
 
         <script type="text/javascript" charset="utf-8">
         </script>
@@ -27,12 +28,14 @@
     </head>
     <body>
           <div id="home" data-role="page" data-theme="b">
-              <div data-role="header" data-position="fixed">
-            		<h1>TechCrunch</h1>
+              <div data-role="header" class="bar top" style="position:absolute">
+            		<h1>Dave's TechCrunch</h1>
             		<a class="button ui-btn-right" href="#settings" data-transition="slideup">Settings</a>
             	</div>
-              <ul id="posts" data-role="listview">
-              </ul>
+            	<div id="container">
+                <ul id="posts" data-role="listview" class="scrollable vertical" data-button-events="false" data-theme="d">
+                </ul>
+              </div>
           </div>
           
           <div id="fullstory" data-role="page" data-theme="b">
@@ -40,17 +43,22 @@
               <a class="button" href="#" data-rel="back">Back</a>
               <h1 id="story-title"></h1>
             </div>
-            <div class="s-scrollwrapper" style="display:block">
-              <ul class="rounded" style="padding:6px">
-                <span id="story-content" style="color:black;font-weight:normal;font-size:0.9em;margin-bottom:35px"></span>
-              </ul>
-            </div>
+            <ul class="rounded" style="padding:6px">
+              <span id="story-content" style="color:black;font-weight:normal;font-size:0.9em;margin-bottom:35px"></span>
+            </ul>
           </div>
           
           <div id="settings"  data-role="page" data-theme="b">
-            <div data-role="header"><h1>Info</h1><a class="cancel ui-btn-right" data-rel="back">Close</a></div>
+            <div data-role="header"><h1 id="settings-title">Info</h1><a class="cancel ui-btn-right" data-rel="back">Close</a></div>
             <ul data-role="listview" data-inset="true">
               <li>Techcrunch M5 Reader - v0.5</li>
+              <li>
+                <label for="slider">Show thumbnails:</label>
+                	<select name="slider" id="show-images" data-role="slider">
+                		<option value="off">Off</option>
+                		<option value="on">On</option>
+                	</select>
+              </li>
               <li>
                 <button id="reset-button">Reset Cache</button>
               </li>
@@ -64,6 +72,11 @@
         var latestDate = null;
         
         var techcrunch = null;
+        var show_images = true;
+        var old_show_images = show_images;
+        if (localStorage.getItem('show.images') == 'off') {
+          show_images = false;
+        }
         
         function show_message(msg) {
           $('#message').html(msg);
@@ -84,6 +97,10 @@
         
         // Onload
         M5.onTouchReady(function(){
+          // #home
+          
+          $.event.special.swipe.horizontalDistanceThreshold = 15;
+          
           $('#posts li').live('vmousedown', function() {
             var post = $(this).data('post');
           
@@ -97,20 +114,50 @@
               body = body.replace(/<object.*?\/(object)?>/igm, '').replace(/<script.*?\/(script)?>/igm, '').replace(/<embed.*?\/(embed)?>/igm, '').replace(/<iframe.*?\/(iframe>)?/igm, '');
               
               //console.log(body);
-              $('#story-content').html('<p>' + body + '</p>');
+              $('#story-content').html('<p>' + body + '<' + '/p>');
               $('#story-content img, #story-content script, #story-content noscript').remove();
               //$("#story-content").prepend(imgTag);
               //$('#story-content a').attr('target', "_blank");
             });
           });
 
+          // #fullstory
+          $('#fullstory').bind('pagecreate', function() {
+            $('#story-content').bind('swiperight', function() {
+              $.mobile.changePage('#home', {reverse:true});
+            });
+          });
+          
+          // #settings
+          
           $('#reset-button').bind('vclick', function() {
             if (confirm("Are you sure you want to clear cached data?")) {
               techcrunch.reset();
               window.location = '/';
             }
           });
-            
+          
+          $('#settings').bind('pageshow', function() {  
+            old_show_images = show_images;
+            if (show_images) {
+              $('#show-images')[0].selectedIndex = 1;
+              $('#show-images').slider('refresh');
+            }
+          });
+
+          $('#settings').bind('pagehide', function() {  
+            if (show_images != old_show_images) {
+              setTimeout(function() {
+                window.location.reload();
+              }, 100);
+            }
+          });
+          
+          $('#show-images').change(function() {
+            var val = $(this).val();
+            localStorage.setItem("show.images", val);
+            show_images = (val == 'on');
+          });
           
           $('#myhost').html(window.location.href);
           

@@ -249,8 +249,8 @@ function postBuilder(post, prepend) {
     //imgSrc = ImageCache.image_src(imgSrc);
   }
   imgSrc = imgSrc || null;
-  var imgTag = imgSrc ? ('<img src="' + imgSrc + '" id="' + post.uid + '-thumb" NOonload="ImageCache.cache(this,60,60)" />') : '';
-  var postText = '<li data-theme="c" id="' + post.uid + '"><a href="#fullstory">' + 
+  var imgTag = (imgSrc  && show_images) ? ('<img src="' + imgSrc + '" id="' + post.uid + '-thumb" NOonload="ImageCache.cache(this,60,60)" />') : '';
+  var postText = '<li id="' + post.uid + '"><a href="#fullstory">' + 
       '<span class="ui-li-thumb">' + imgTag + '</span>' +
       '<h3>' + post.title + '</h3></a>' + '<span class="author">' + post.author  +'</span>' +
       '<div style="clear:both">' + '</li>';
