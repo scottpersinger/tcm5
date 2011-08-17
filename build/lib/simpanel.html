@@ -1,0 +1,340 @@
+<!doctype html>
+<html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>M5 Simulator Control Panel</title>
+      <link rel="stylesheet" href="lib/m5/m5.simulator.css" />
+      <link rel="stylesheet" href="tutorial__/docs.css" />
+      <script type="text/javascript" src="lib/jqtouch/jquery-1.5.1.min.js"></script>
+      <script type="text/javascript" src="lib/m5/m5.boot.js"></script>
+      <script>
+        M5.set_env('development');
+        M5.settings.app_name = "simulator";
+        M5.assume_browser(true);
+        M5.settings.no_sim_panel = true;
+        M5.settings.simulator_console = true;
+      </script>
+      
+      <script type="text/javascript" src="lib/m5/m5.support.js"></script>
+      <script type="text/javascript" src="lib/m5/m5.remote_console.js"></script>
+      <script type="text/javascript" src="lib/m5/m5.simulator.js"></script>
+      
+      <script type="text/javascript">
+        M5.settings.app_name = "sim.m5apps.org";
+      </script>
+      
+      <script src="http://yui.yahooapis.com/3.3.0/build/yui/yui-min.js" charset="utf-8"></script>
+      
+      <style>
+        a {
+          color:blue;
+          text-decoration:underline;
+          cursor:pointer;
+        }
+        
+        #toolbar {
+          width:100%;
+        }
+        
+        #toolbar .tab {
+          float:left;
+          width:80px;
+          margin-right:2px;
+        }
+        #toolbar .active {
+          font-weight:bold;
+        	background: -webkit-gradient(linear, left top, left bottom, from(#EEE), to(#979797));
+        }
+        .panels {
+          overflow:hidden;
+          min-height:100%;
+        }
+        .panels .panel {
+          min-height:100%;
+        }
+        #imgarea img {
+          max-height: 300px;
+        }
+        
+        #editor .toolbar a {
+          margin-right:10px;
+        }
+        
+        #editor .toolbar a img {
+          height:24px;
+          box-shadow:1px 1px 2px #BBB;
+        }
+
+        #editor .toolbar a:active img {
+          box-shadow:-1px -1px 2px #BBB;
+        }
+        
+        html {
+          height:100%;
+        }
+        
+        body {
+          margin:0;
+          padding:0;
+          height:100%;
+        }
+        
+        .fillout {
+          position:absolute;
+          top:0;
+          left:0;
+          right:0;
+          bottom:0;
+        }
+        body > div {
+          height:100%;
+        }
+        
+      </style>
+      
+      <script>
+        var editor_file = null;
+        var deviceList;
+
+        
+        function switch_tab(tab) {
+          $('.tab').removeClass("active");
+          $('.tab[data-tab=' + tab + ']').addClass("active");
+          $('.panel').removeClass('active');
+          $('#' + tab).addClass('active').find('input textarea').focus();
+        }
+        
+        // CONSOLE TAB
+        
+        // Console history is a nasty little thing. It starts empty, then as the user types commands they
+        // get pushed onto the stack. Pressing up arrow peeks at the next item on the stack and places
+        // it at the console cursor. Down arrow goes in reverse until you're at the top of the stack,
+        // and then we put "" at the console. Any command, whether typed new or recalled, is pushed
+        // onto the top of the stack, and the current pointer is reset to the top of the stack. 
+        var console_history = [];
+        var history_pos = console_history.length;
+        
+        function run_console_entry() {
+          var cmd = $('#console_entry').val();
+          console_history.push(cmd);
+          while (console_history.length > 50) {
+            console_history.shift(1);
+          }
+          history_pos = console_history.length;
+          M5.util.set_cookie('hist', JSON.stringify(console_history));
+          
+          write_console("> " + cmd);
+          M5.remote.command(cmd);
+          $('#console_entry').val('');
+        }
+        
+        function back_history() {
+          if (history_pos > 0) {
+            history_pos--;
+            $('#console_entry').val(console_history[history_pos]);
+          }
+        }
+        
+        function forward_history() {
+          if (history_pos < console_history.length) {
+            history_pos++;
+            $('#console_entry').val(history_pos < console_history.length ? console_history[history_pos] : '');
+          }
+        }
+        
+        function write_console(content) {
+          $('#console_output').append(content + "<br />");
+        }
+        M5.onTouchReady(function() {        
+          M5.simulator.debug = write_console;
+        });
+        
+        // EDITOR TAB
+        
+        function load_files() {
+          $.get('/dir__', function(files) {
+            $('#filelist').html();
+            $.each(files, function() {
+              $('#filelist').append('<p><a class="flink" data-file="' + this + '">' + this + '</p>');
+            });
+          }, 'json');
+        }
+        
+        function show_text(text) {
+          $('#imgarea').hide();
+          $('#content').val(text).show();
+        }
+        
+        function show_image(imgname) {
+          $('#content').hide();
+          $('#imgarea').html(M5.format('<img src="%@" />', imgname)).show();
+        }
+        
+        function editor_message(msg, auto_remove) {
+          $('#editor_message').html(msg);
+          if (auto_remove) {
+            setTimeout(function () {$('#editor_message').html('')}, 1500);
+          }
+        }
+        
+        function save_editor(fname) {
+          if (editor_file) {
+            editor_message("Saving...", true);
+            $.post('save__/' + fname, {body: $('#content').val()});
+          }
+        }
+        
+        function cancel_editor() {
+          show_text('');
+          editor_file = null;
+        }
+        
+        M5.onTouchReady(function() {
+          $(function() {
+            M5.remote.connect_send(M5.settings.app_name);
+          });
+
+          M5.simulator.load_devices(function(devices) {
+            deviceList = devices;
+            var opts = "";
+            $.each(deviceList, function(name, item) {
+              opts += "<option>" + name + "</option>";
+            });
+            $("#device").html(opts);
+            changeDevice('iPhone 3G');
+          });
+          
+          function changeDevice(name) {
+            window.parent.postMessage("device," + name, "http://" + window.location.host);
+            
+          }
+          $('#device').change(function() {
+            changeDevice($(this).val());
+          });
+
+          $('#landscape').change(function() {
+            window.parent.postMessage("landscape," + $(this).attr('checked'), "http://" + window.location.host);
+          });
+          
+          var h;
+          if (h = M5.util.get_cookie('hist')) {
+            console_history = eval(h);
+            if ($.isArray(console_history)) {
+              history_pos = console_history.length;
+            } else {
+              console_hisory = [];
+            }
+          }
+          
+          $('.flink').live('click', function() {
+            var fname = $(this).attr('data-file');
+            if (fname.match(/(\.png|\.jpe?g|\.gif)$/)) {
+              show_image(fname);
+            } else {
+              $.get('file__/' + fname, function(result) {
+                editor_file = fname;
+                show_text(result);
+              }, 'text');
+            }
+          });
+          
+          $('#save').click(function() {
+            save_editor(editor_file);
+          });
+          
+          $('#cancel').click(function() {
+            cancel_editor();
+          });
+          
+          $('#storage-clear').click(function(e) {
+            M5.remote.command("clear_local_storage()");
+          });
+          
+          $('#console_entry').keyup(function(e) {
+            if (e.keyCode == 13) {
+              run_console_entry();
+            } else if (e.keyCode == 38) {
+              // arrow up
+              back_history();
+            } else if (e.keyCode == 40) {
+              forward_history();
+            }
+          });
+          
+          function load_tutorial_page(url) {
+            if (url == "" || url == "/") {
+              url = "index.md"
+            }
+            if (!url.match(/^http:/)) {
+              url = "/tutorial__/" + url;
+            } else {
+              window.open(url);
+              return;
+            }
+            $('#tutorial').load(url, function() {
+              $('#tutorial a').click(function(e) {
+                e.preventDefault();
+                load_tutorial_page($(this).attr('href'));
+              });
+            });
+          }
+          load_tutorial_page('index.md');
+          
+          
+          M5.addConsoleListener(function(msg) {
+            write_console(msg);
+          });
+          
+          load_files();
+          //switch_tab('console');
+        });
+
+      </script>
+    </head>
+    <body style="height:100%" class="yui3-skin-sam">
+        <div id="container" style="height:100%">
+          <ul>
+            <li><a href="#console">Console</a></li>
+            <li><a href="#editor">Editor</a></li>
+            <li><a href="#storage">Storage</a></li>
+            <li><a href="#tutorial">Tutorial</a></li>
+            <div style="margin-right:20px;float:right">Device <select id="device"></select>&nbsp;&nbsp;<input type="checkbox" id="landscape" /> Landscape</div>
+          </ul>
+          <div class="panels" style="position:relative">
+            <div id="console" class="panel">
+              <div id="console_output">
+              </div>
+              <div>> <input id="console_entry" type="text" style="width:90%;border:none"></input></div>
+            </div>
+            <div id="editor" class="panel" style="position:absolute;top:0;left:0;right:0;bottom:0">
+              <div id="filelist" style="float:left;width:100px;height:100%;font-size:12px;border-right:1px solid #222"></div>
+              <div style="margin-left:104px;height:100%">
+                <div class="toolbar" style="height:30px;border-bottom:1px solid #666;padding-top:4px">
+                  <a id="save"><img src="lib/m5/assets/disk-black.png" /></a>
+                  <a id="cancel"><img src="lib/m5/assets/minus-circle.png" /></a>
+                  <div id="editor_message" style="float:right;margin-right:40px;font-weight:bold"></div>
+                </div>
+                <textarea id="content" style="width:100%;height:100%"></textarea>
+                <div id="imgarea" style="position:absolute;padding:20px;background:#CCC;display:none"></div>
+              </div>
+            </div>
+            <div id="storage" class="panel">
+              <button id="storage-clear">Clear Local Storage</button>
+            </div>
+            <div id="tutorial" class="panel fillout" style="overflow-y:scroll">
+            </div>
+          </div>
+        </div>
+        
+        <script>
+          YUI().use('tabview', function (Y) {
+              var tabview = new Y.TabView({
+                  srcNode: '#container'
+              });
+
+              tabview.render();
+              $('.yui3-tabview-panel').css('background-color', '#FAFAFA');
+          });
+        </script>
+    </body>
+</html>

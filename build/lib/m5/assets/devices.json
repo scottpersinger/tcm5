@@ -1,0 +1,20 @@
+[
+    {
+        "name": "iPhone 3G",
+        "image": "iphone.png",
+        "width": 371,
+        "contentLeft": 26,
+        "contentTop": 77,
+        "contentWidth": 320,
+        "contentHeight": 480
+    },
+    {
+        "name": "Droid",
+        "image": "droid.png",
+        "width": 382,
+        "contentLeft": 36,
+        "contentTop": 28,
+        "contentWidth": 300,
+        "contentHeight": 521
+    }
+]

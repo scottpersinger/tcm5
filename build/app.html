@@ -2,30 +2,125 @@
 <html>
   <!-- Techcrunch M5 Reader  --> 
   <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="initial-scale=1.0,user-scalable=no" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta charset="UTF-8"></meta>
+      <meta name="viewport" content="initial-scale=1.0,user-scalable=no"></meta>
+      <meta name="apple-mobile-web-app-capable" content="yes"></meta>
 
       <title>Techcrunch</title>
         
         <!--
-          @require jquery
-          @require jquery-mobile
-          @require m5.boot, m5.env, m5.support
-          @require m5.simplestorage
-          @require m5.remote_console
-          @require m5.simulator
-          @require scrollability
-        -->
+        --><script type="text/javascript" src="lib/jquery-1.6.1.min.js"></script> 
+<link rel="stylesheet" href="lib/jquery-mobile/jquery.mobile-1.0b2.min.css" type="text/css" /> <script type="text/javascript" src="lib/jquery-mobile/jquery.mobile-1.0b2.min.js"></script>  
+<script type="text/javascript" src="lib/m5/m5.boot.js"></script> <script type="text/javascript" src="m5.env.production.js"></script> <script type="text/javascript" src="lib/m5/m5.support.js"></script> 
+<script type="text/javascript" src="lib/m5/m5.simplestorage.js"></script> 
+ 
+ 
+<link rel="stylesheet" href="lib/scrollability.css" type="text/css" /> <script type="text/javascript" src="lib/scrollability.js"></script>  
 
-        <link href="app.css" rel="stylesheet" /> 
+         
 
         <script type="text/javascript" charset="utf-8">
         </script>
 
         <script src="application.js" charset="utf-8"></script>
         
-    </head>
+    <style type="text/css">
+/* css app.css */
+#jqt.fullscreen #home .info {
+    display: none;
+}
+div#jqt #story-content {
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FFFFFF), to(#EDEDED));
+}
+/* allow stories titles to use multiple lines */
+.ui-li-heading {
+  white-space: normal;
+}
+
+#jqt ul li {
+  position:relative;
+}
+
+.author {
+  font-size:0.8em;
+  font-style:italic;
+  color:#999;
+  position:absolute;
+  right:4px;
+  bottom:1px;
+}
+
+#story-content p {
+  margin-bottom:0.2em;
+}
+
+#story-content img {
+  height:60px;
+  float:right;
+  box-shadow: 3px 3px 5px #888;
+}
+
+#posts .imgholder {
+  float:left;
+  width:50px;
+  height:50px;
+  overflow:hidden;
+  margin-right:4px;
+  box-shadow: 2px 2px 2px #AAA;
+}
+
+#posts img {
+  height:60px;
+}
+
+#posts .title {
+  margin-left:56px;
+  display:block;
+}
+
+#jqt ul li.arrow {
+  background-image: none;
+}
+
+.ui-li-thumb {
+  width:60px;
+  height:60px;
+  overflow:hidden;
+  position:absolute;
+  left:4px;
+  top:50%;
+  margin-top:-30px;
+}
+
+.ui-li-thumb img {
+  width:80px;
+  position:absolute;
+  top:-10px;
+  left:-10px;
+}
+
+#posts h3 {
+  margin-left:68px;
+}
+
+.ui-li .ui-btn-inner a.ui-link-inherit {
+  padding: 0 32px 0px 0px;
+  min-height:70px;
+}
+
+/** Story detail page (#fullstory) */
+#fullstory h1 {
+  font-size: 12px;
+  white-space: normal;
+  height: 2.5em;
+  word-wrap: break-word;
+  margin: .6em 70px .2em;
+}
+</style>
+<script type="text/javascript">
+
+</script>
+</head>
     <body>
           <div id="home" data-role="page" data-theme="b">
               <div data-role="header" class="bar top" style="position:absolute">
@@ -48,7 +143,7 @@
             </ul>
           </div>
           
-          <div id="settings"  data-role="page" data-theme="b">
+          <div id="settings" data-role="page" data-theme="b">
             <div data-role="header"><h1 id="settings-title">Info</h1><a class="cancel ui-btn-right" data-rel="back">Close</a></div>
             <ul data-role="listview" data-inset="true">
               <li>Techcrunch M5 Reader - v0.5</li>

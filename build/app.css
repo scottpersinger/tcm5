@@ -1,0 +1,90 @@
+#jqt.fullscreen #home .info {
+    display: none;
+}
+div#jqt #story-content {
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FFFFFF), to(#EDEDED));
+}
+/* allow stories titles to use multiple lines */
+.ui-li-heading {
+  white-space: normal;
+}
+
+#jqt ul li {
+  position:relative;
+}
+
+.author {
+  font-size:0.8em;
+  font-style:italic;
+  color:#999;
+  position:absolute;
+  right:4px;
+  bottom:1px;
+}
+
+#story-content p {
+  margin-bottom:0.2em;
+}
+
+#story-content img {
+  height:60px;
+  float:right;
+  box-shadow: 3px 3px 5px #888;
+}
+
+#posts .imgholder {
+  float:left;
+  width:50px;
+  height:50px;
+  overflow:hidden;
+  margin-right:4px;
+  box-shadow: 2px 2px 2px #AAA;
+}
+
+#posts img {
+  height:60px;
+}
+
+#posts .title {
+  margin-left:56px;
+  display:block;
+}
+
+#jqt ul li.arrow {
+  background-image: none;
+}
+
+.ui-li-thumb {
+  width:60px;
+  height:60px;
+  overflow:hidden;
+  position:absolute;
+  left:4px;
+  top:50%;
+  margin-top:-30px;
+}
+
+.ui-li-thumb img {
+  width:80px;
+  position:absolute;
+  top:-10px;
+  left:-10px;
+}
+
+#posts h3 {
+  margin-left:68px;
+}
+
+.ui-li .ui-btn-inner a.ui-link-inherit {
+  padding: 0 32px 0px 0px;
+  min-height:70px;
+}
+
+/** Story detail page (#fullstory) */
+#fullstory h1 {
+  font-size: 12px;
+  white-space: normal;
+  height: 2.5em;
+  word-wrap: break-word;
+  margin: .6em 70px .2em;
+}
