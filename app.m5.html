@@ -15,37 +15,51 @@
           @require m5.simplestorage
           @require m5.remote_console
           @require m5.simulator
-          @require scrollability
+          @require lib/twitter.scrollview
         -->
 
         <link href="app.css" rel="stylesheet" /> 
 
-        <script type="text/javascript" charset="utf-8">
-        </script>
-
         <script src="application.js" charset="utf-8"></script>
-        
+
+        <style>
+        .pull-down-to-refresh {
+          position: absolute;
+          top: -70px;
+          height: 70px;
+          width: 100%;
+          text-align: center;
+          background: #F8F8F8;
+          border-bottom: 1px solid #EEE;
+        }
+        .refresh-label {
+          position:absolute;
+          bottom:36px;
+        }
+        </style>
     </head>
     <body>
           <div id="home" data-role="page" data-theme="b">
-              <div data-role="header" class="bar top" style="position:absolute">
+              <div data-role="header" class="bar top">
             		<h1>TechCrunch</h1>
             		<a class="button ui-btn-right" href="#settings" data-transition="slideup">Settings</a>
             	</div>
-            	<div id="container">
-                <ul id="posts" data-role="listview" class="scrollable vertical" data-button-events="false" data-theme="d">
-                </ul>
-              </div>
+              <ul id="posts" data-role="listview" class="scrollable vertical" data-button-events="false" data-theme="d">
+                <li class="pull-down-to-refresh" style="background-color:#D6D6D6"><div class="refresh-label"><div class="label">Pull to refresh</span><span class="indicator" style="display:none">Refreshing 
+                  <img src="assets/indicator.gif" style="width:16px;height:16px" /></span></div></li>
+              </ul>
           </div>
           
           <div id="fullstory" data-role="page" data-theme="b">
-            <div data-role="header" data-position="fixed">
+            <div data-role="header" data-NO-position="fixed">
               <a class="button" href="#" data-rel="back">Back</a>
               <h1 id="story-title"></h1>
             </div>
-            <ul class="rounded" style="padding:6px">
+            <div class="scroll-container">
+            <ul id="story-scroll" class="scrollable vertical" style="padding:6px;background-color:#FFF;margin:0">
               <span id="story-content" style="color:black;font-weight:normal;font-size:0.9em;margin-bottom:35px"></span>
             </ul>
+            </div>
           </div>
           
           <div id="settings"  data-role="page" data-theme="b">
@@ -90,7 +104,16 @@
         function reload() {
           show_message('Loading stories...');
           techcrunch.loadNewPosts(postBuilder, function() {
+            postBuilder({title: "A new article", author:"Me", date:new Date()}, true);
+            
+            $('#posts .pull-down-to-refresh').prependTo($('#posts'));
+            $('#posts .pull-down-to-refresh .indicator').hide();
+            $('#posts .pull-down-to-refresh .label').show();
+            
             $('#posts').listview('refresh');
+            scrollability.scrollTo($('#posts')[0], 0, -($('#posts li:first')[0].offsetHeight));
+            scrollability.flashIndicators();
+            
             hide_message();
           });
         }
@@ -99,7 +122,7 @@
         M5.onTouchReady(function(){
           // #home
           
-          $.event.special.swipe.horizontalDistanceThreshold = 15;
+          $.event.special.swipe.horizontalDistanceThreshold = 25;
           
           $('#posts li').live('vmousedown', function() {
             var post = $(this).data('post');
@@ -121,11 +144,24 @@
             });
           });
 
+          $('#posts').bind('pulledDown', function() {
+            var $posts = $('#posts');
+            $('#posts .pull-down-to-refresh .label').hide();
+            $('#posts .pull-down-to-refresh .indicator').show();
+            scrollability.scrollToTop($posts[0], 500);
+            setTimeout(reload, 0);
+          });
+          
           // #fullstory
           $('#fullstory').bind('pagecreate', function() {
             $('#story-content').bind('swiperight', function() {
               $.mobile.changePage('#home', {reverse:true});
             });
+          });
+          
+
+          $('#fullstory').bind('pagehide', function() {  
+            scrollability.scrollToTop($('#story-scroll')[0]);
           });
           
           // #settings
@@ -161,12 +197,7 @@
           
           $('#myhost').html(window.location.href);
           
-          //jQT.barsSettings.autoLoad_iScroll = false;
           
-          // Story swipe
-          $('#story-content').swipe(function(evt, data) {
-            //jQT.goBack();
-          });
           // Reload button
           $('#reload').click(function() {
             window.location.reload();
@@ -176,19 +207,6 @@
             techcrunch.reset();
             applicationCache.update();
             window.location.reload();
-          });
-          // Dev mode
-          if (localStorage.getItem('devmode')) {
-            $('#devmode').attr('checked',true);
-          }
-          $('#devmode').change(function() {
-            if ($(this).val()) {
-              localStorage.setItem('devmode', 'true');
-              techcrunch.runLocally(false);
-            } else {
-              localStorage.removeItem('devmode');
-              techcrunch.runLocally(false);
-            }
           });
           // Message box
           $('#msgbox').ajaxError(function() {
@@ -205,15 +223,22 @@
           setTimeout(function() {
             $storage = SimpleStorage.connect('blogs', 2*1024*1024, function(db) {
               techcrunch = BlogReader(db);
-              setTimeout(reload, 100);
+              //setTimeout(reload, 100);
             
               techcrunch.loadStoredPosts(postBuilder, function() {
                 $('#posts').listview('refresh');
-                //jQT.setPageHeight();                
                 hide_message();
+                // Setup scrollview
+                setTimeout(function() {
+                  TWITTER.use(["scrollview"], function(ctx) {
+                    new ctx.ScrollView({element: $('#posts')[0]});
+                  });
+                  $('a').addClass('activeLink');
+                }, 100);
+
               });
             });
-          }, 1000);
+          }, 100);
         
         });
         
